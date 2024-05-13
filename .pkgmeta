@@ -1,0 +1,6 @@
+package-as: CharacterStatsPaneImproved
+
+ignore:
+  - .gitignore
+  - .pkgmeta
+  - README.md
