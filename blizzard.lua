@@ -234,20 +234,18 @@ function addon.CleanStatCategory(categoryFrame)
     local categoryInfo = categoryFrame.Category and PAPERDOLL_STATCATEGORIES[categoryFrame.Category]
     if (categoryInfo) then
       local numStats = #categoryInfo.stats
-      for i=1,numStats do
+      for i = 1, numStats, 1 do
         local statFrame = _G[categoryFrameName.."Stat"..i]
         if statFrame and statFrame:IsShown() then
           local text = statFrame.Value and statFrame.Value:GetText()
           if text == NOT_APPLICABLE then
             local statHeight = statFrame:GetHeight()
             totalHeight = totalHeight - statHeight
-            local _, relativeTo = statFrame:GetPoint(1)
-            statFrame:Hide()
             local nextStatFrame = _G[categoryFrameName.."Stat"..(i+1)]
             if nextStatFrame and nextStatFrame:IsShown() then
-              nextStatFrame:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, 0)
-              nextStatFrame:SetPoint("TOPRIGHT", relativeTo, "BOTTOMRIGHT", 0, 0)
+              nextStatFrame:SetAllPoints(statFrame)
             end
+            statFrame:Hide()
             needUpdate = true
           end
         end
