@@ -38,6 +38,7 @@ function addon:SetupPaneHooks()
   hooksecurefunc("PaperDoll_MoveCategoryDown",addon.MoveCategoryDown)
   hooksecurefunc("PaperDollStatCategory_OnDragStart",addon.StatCategory_OnDragStart)
   hooksecurefunc("PaperDollStatCategory_OnDragStop",addon.StatCategory_OnDragStop)
+  hooksecurefunc("PaperDollFrame_UpdateStatCategory",addon.CleanStatCategory)
 end
 
 local PAPERDOLL_STATINFO_CSPM = addon.NEW_STATINFO

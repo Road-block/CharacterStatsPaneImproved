@@ -28,6 +28,14 @@ local function getCTC()
   return addon.ctc_data
 end
 
+local function FindPlayerAuraByID(spellId)
+  local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellId)
+  if aura and aura.spellId == spellId then
+    return aura.name
+  end
+  return false
+end
+
 local luck_data = {}
 local luck_quotes = {
   [[I broke a mirror and got seven years bad luck but my lawyer thinks he can get me down to five]],
@@ -47,6 +55,10 @@ local luck_quotes = {
   [[The only sure thing about luck is that it will change]],
   [[Throw a lucky man in the sea, and he will come up with a fish in his mouth]],
   [[If you are looking for bad luck, you will soon find it ^_^]],
+  [[I asked luck for a penny, and she gave me a dime. That’s what I call inflation.]],
+  [[I don’t need luck, I just need a good sense of humor and a lot of caffeine.]],
+  [[I get enough exercise just pushing my luck!]],
+  [[Luck is like a boomerang – sometimes it comes back to hit you in the face]],
   [[There Goes Your Life Savings...]],
   [[I have one-of-a-kind items]],
   [[Your gold is welcome here]],
@@ -75,12 +87,18 @@ local function CTC_OnEnter(statFrame)
   GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT")
   if not addon.ctc_data[3] then return end
   local playerLevel = UnitLevel("player")
+  local is_warrior = addon.CLASSID and (addon.CLASSID == 1)
   local coverage, delta = addon.ctc_data[3].ctc, addon.ctc_data[3].delta
   coverage = format("%.2F%%",coverage>=100 and 100 or coverage)
+  local can_shieldblock = is_warrior and not FindPlayerAuraByID(2565)
   if delta > 0 then
-    coverage = RED_FONT_COLOR_CODE .. coverage .. FONT_COLOR_CODE_CLOSE
+    if can_shieldblock and (delta <= 25) then
+      coverage = YELLOW_FONT_COLOR_CODE .. coverage .. FONT_COLOR_CODE_CLOSE
+    else
+      coverage = RED_FONT_COLOR_CODE .. coverage .. FONT_COLOR_CODE_CLOSE
+    end
   end
-  GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L.STAT_CTC_VERBOSE).." "..coverage..FONT_COLOR_CODE_CLOSE)
+  GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L.STAT_CTC_VERBOSE)..format(" %.1F%%",addon.ctc_data[3].ctc)..FONT_COLOR_CODE_CLOSE)
   GameTooltip:AddLine(format(L.STAT_CTC_DETAIL, coverage, -delta))
   GameTooltip:AddLine(" ")
   GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, L.STAT_CTC_DELTA, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
@@ -91,19 +109,23 @@ local function CTC_OnEnter(statFrame)
       level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t"
     end
     if delta < 0 then
-      if addon.CLASSID == 1 and IsPlayerSpell(76857) then -- warrior with crit block mastery
+      if is_warrior and IsPlayerSpell(76857) then -- warrior with crit block mastery
         delta = format(L.STAT_CTC_CRITBLOCK, -delta)
       else
         if delta > -1 then
-          delta = GRAY_FONT_COLOR_CODE..format()
+          delta = GREEN_FONT_COLOR_CODE..format("%.2F%%    ",-delta)..FONT_COLOR_CODE_CLOSE
         else
-          delta = GRAY_FONT_COLOR_CODE..format("%.2F%%",-delta)
+          delta = GRAY_FONT_COLOR_CODE..format("%.2F%%    ",-delta)..FONT_COLOR_CODE_CLOSE
         end
       end
     else
-      delta = RED_FONT_COLOR_CODE..format("%.2F%%",-delta)
+      if can_shieldblock and (delta <= 25) then -- softcap, can ctc with shield block
+        delta = YELLOW_FONT_COLOR_CODE..format("%.2F%%    ",-delta)..FONT_COLOR_CODE_CLOSE
+      else
+        delta = RED_FONT_COLOR_CODE..format("%.2F%%    ",-delta)..FONT_COLOR_CODE_CLOSE
+      end
     end
-    GameTooltip:AddDoubleLine("      "..level, delta.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b)
+    GameTooltip:AddDoubleLine("      "..level, delta, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b)
   end
   GameTooltip:Show()
 end

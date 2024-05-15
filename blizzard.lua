@@ -71,7 +71,7 @@ function addon.MoveCategoryUp(self)
       break
     end
   end
-  C_Timer.After(0.1, addon.UpdateCategoryPositions)
+  addon.UpdateCategoryPositions()
 end
 
 function addon.MoveCategoryDown(self)
@@ -84,7 +84,7 @@ function addon.MoveCategoryDown(self)
       break
     end
   end
-  C_Timer.After(0.1, addon.UpdateCategoryPositions)
+  addon.UpdateCategoryPositions()
 end
 
 addon._dragInfo = {}
@@ -222,5 +222,40 @@ function addon.UpdateCategoryPositions()
       frame:SetPoint("TOPLEFT", 1+xOffset, -STATCATEGORY_PADDING+(CharacterStatsPane.initialOffsetY or 0))
     end
     prevFrame = frame
+  end
+end
+
+function addon.CleanStatCategory(categoryFrame)
+  if PetPaperDollFrame:IsVisible() then return end
+  if categoryFrame:IsShown() and not categoryFrame.collapsed then
+    local totalHeight = categoryFrame:GetHeight()
+    local needUpdate = false
+    local categoryFrameName = categoryFrame:GetName()
+    local categoryInfo = categoryFrame.Category and PAPERDOLL_STATCATEGORIES[categoryFrame.Category]
+    if (categoryInfo) then
+      local numStats = #categoryInfo.stats
+      for i=1,numStats do
+        local statFrame = _G[categoryFrameName.."Stat"..i]
+        if statFrame and statFrame:IsShown() then
+          local text = statFrame.Value and statFrame.Value:GetText()
+          if text == NOT_APPLICABLE then
+            local statHeight = statFrame:GetHeight()
+            totalHeight = totalHeight - statHeight
+            local _, relativeTo = statFrame:GetPoint(1)
+            statFrame:Hide()
+            local nextStatFrame = _G[categoryFrameName.."Stat"..(i+1)]
+            if nextStatFrame and nextStatFrame:IsShown() then
+              nextStatFrame:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, 0)
+              nextStatFrame:SetPoint("TOPRIGHT", relativeTo, "BOTTOMRIGHT", 0, 0)
+            end
+            needUpdate = true
+          end
+        end
+      end
+    end
+    if needUpdate then
+      categoryFrame:SetHeight(totalHeight)
+      PaperDollFrame_UpdateStatScrollChildHeight()
+    end
   end
 end
