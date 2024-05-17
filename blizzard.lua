@@ -157,6 +157,8 @@ function addon.StatCategory_OnDragStop(self)
     tremove(CharacterStatsPaneImprovedDB[addon.spec].order, addon._dragInfo.myIndex)
     tinsert(CharacterStatsPaneImprovedDB[addon.spec].order, addon._dragInfo.insertIndex, addon._dragInfo.category)
   end
+
+  addon.UpdateCategoryPositions()
 end
 
 --[[RESTORE]]--
