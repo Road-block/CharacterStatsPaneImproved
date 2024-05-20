@@ -11,6 +11,7 @@ local LOCALE = GetLocale()
 if LOCALE == "enUS" then
   L.STAT_CTC = "CTC"
   L.STAT_LUCK = "Luck"
+  L.STAT_GEARCHECK = "Gear Checks"
   L.STAT_CTC_DETAIL = "|TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|tBoss CTC %s (%.2F%%)"
   L.STAT_CTC_VERBOSE = "Combat Table Coverage"
   L.STAT_CTC_DELTA = "CTC Delta"

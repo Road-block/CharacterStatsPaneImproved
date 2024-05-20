@@ -15,18 +15,10 @@ local function FindCategoryFrameFromCategoryName(categoryName)
   return nil
 end
 
-local function tCount(tbl)
-  local count = 0
-  for k,v in pairs(tbl) do
-    count = count + 1
-  end
-  return count
-end
-
 local function EqualArrays(arr1, arr2)
   if #arr1 ~= #arr2 then return false end
-  local arr1str = table.concat(arr1,nil,1, tCount(arr1))
-  local arr2str = table.concat(arr2,nil,1, tCount(arr2))
+  local arr1str = table.concat(arr1,nil,1, addon.tCount(arr1))
+  local arr2str = table.concat(arr2,nil,1, addon.tCount(arr2))
   if arr1str ~= arr2str then return false end
   return true
 end
@@ -89,7 +81,7 @@ end
 
 addon._dragInfo = {}
 function addon.StatCategory_OnDragStart(self)
-  if PetPaperDollFrame:IsVisible() then return end
+  --[[if PetPaperDollFrame:IsVisible() then return end
   local _
   wipe(addon._dragInfo)
   addon._dragInfo.category = self.Category
@@ -120,10 +112,10 @@ function addon.StatCategory_OnDragStart(self)
       addon._dragInfo.insertIndex = index
       addon._dragInfo.closestPos = abs(addon._dragInfo.cursorY-frameY)
     end
-  end
+  end]]
 end
 function addon.StatCategory_OnDragStop(self)
-  if PetPaperDollFrame:IsVisible() then return end
+  --[[if PetPaperDollFrame:IsVisible() then return end
   -- Find position that will put the dragged frame closest to the cursor
   for index=1, #CharacterStatsPaneImprovedDB[addon.spec].order+1 do -- +1 is to check the very last position at the bottom
     if (CharacterStatsPaneImprovedDB[addon.spec].order[index] == addon._dragInfo.category) then
@@ -152,13 +144,10 @@ function addon.StatCategory_OnDragStop(self)
   if (addon._dragInfo.insertIndex > addon._dragInfo.myIndex) then
     addon._dragInfo.insertIndex = addon._dragInfo.insertIndex - 1
   end
-
   if ( addon._dragInfo.myIndex ~= addon._dragInfo.insertIndex) then
     tremove(CharacterStatsPaneImprovedDB[addon.spec].order, addon._dragInfo.myIndex)
     tinsert(CharacterStatsPaneImprovedDB[addon.spec].order, addon._dragInfo.insertIndex, addon._dragInfo.category)
-  end
-
-  addon.UpdateCategoryPositions()
+  end]]
 end
 
 --[[RESTORE]]--

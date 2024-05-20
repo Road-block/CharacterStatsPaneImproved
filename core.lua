@@ -36,8 +36,8 @@ function addon:SetupPaneHooks()
   hooksecurefunc("PaperDoll_InitStatCategories",addon.InitStatCategories)
   hooksecurefunc("PaperDoll_MoveCategoryUp",addon.MoveCategoryUp)
   hooksecurefunc("PaperDoll_MoveCategoryDown",addon.MoveCategoryDown)
-  hooksecurefunc("PaperDollStatCategory_OnDragStart",addon.StatCategory_OnDragStart)
-  hooksecurefunc("PaperDollStatCategory_OnDragStop",addon.StatCategory_OnDragStop)
+  --hooksecurefunc("PaperDollStatCategory_OnDragStart",addon.StatCategory_OnDragStart)
+  --hooksecurefunc("PaperDollStatCategory_OnDragStop",addon.StatCategory_OnDragStop)
   hooksecurefunc("PaperDollFrame_UpdateStatCategory",addon.CleanStatCategory)
 end
 
@@ -54,6 +54,7 @@ function addon:ADDON_LOADED(...)
     addon.spec = GetActiveTalentGroup() or 1
     f:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
     self:AddStat("DEFENSE","CTC","BLOCK")
+    self:AddStat("GENERAL","GEARCHECK")
     self:AddStat("ATTRIBUTES","LUCK")
   end
 end
