@@ -356,26 +356,32 @@ local function getGearCheckList()
   wipe(addon.socket_list)
   wipe(addon.tinker_list)
   for slot, check in pairs(enchantable) do
-    if check == true then
-      addon.enchant_list[slot] = 1
-    else
-      if private[check](slot) then
+    if (GetInventoryItemID("player", slot)) then
+      if check == true then
         addon.enchant_list[slot] = 1
+      else
+        if private[check](slot) then
+          addon.enchant_list[slot] = 1
+        end
       end
     end
   end
   for slot, check in pairs(socketable) do
-    if check == true then
-      addon.socket_list[slot] = 1
-    else
-      if private[check](slot) then
-        addon.socket_list[slot] = private[check](slot)
+    if (GetInventoryItemID("player", slot)) then
+      if check == true then
+        addon.socket_list[slot] = 1
+      else
+        if private[check](slot) then
+          addon.socket_list[slot] = private[check](slot)
+        end
       end
     end
   end
   for slot,check in pairs(tinkers) do
-    if (check == true) or private[check](slot) then
-      addon.tinker_list[slot] = 1
+    if (GetInventoryItemID("player", slot)) then
+      if (check == true) or private[check](slot) then
+        addon.tinker_list[slot] = 1
+      end
     end
   end
   return addon.enchant_list, addon.socket_list, addon.tinker_list
