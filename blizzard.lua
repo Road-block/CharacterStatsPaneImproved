@@ -198,21 +198,23 @@ function addon.UpdateCategoryPositions()
 
   for index = 1, #CharacterStatsPaneImprovedDB[addon.spec].order do
     local frame = FindCategoryFrameFromCategoryName(CharacterStatsPaneImprovedDB[addon.spec].order[index])
-    frame:ClearAllPoints()
-    -- Indent the one we are currently dragging
-    local xOffset = 0
-    if (frame == MOVING_STAT_CATEGORY) then
-      xOffset = STATCATEGORY_MOVING_INDENT
-    elseif (prevFrame and prevFrame == MOVING_STAT_CATEGORY) then
-      xOffset = -STATCATEGORY_MOVING_INDENT
-    end
+    if frame then
+      frame:ClearAllPoints()
+      -- Indent the one we are currently dragging
+      local xOffset = 0
+      if (frame == MOVING_STAT_CATEGORY) then
+        xOffset = STATCATEGORY_MOVING_INDENT
+      elseif (prevFrame and prevFrame == MOVING_STAT_CATEGORY) then
+        xOffset = -STATCATEGORY_MOVING_INDENT
+      end
 
-    if (prevFrame) then
-      frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0+xOffset, -STATCATEGORY_PADDING)
-    else
-      frame:SetPoint("TOPLEFT", 1+xOffset, -STATCATEGORY_PADDING+(CharacterStatsPane.initialOffsetY or 0))
+      if (prevFrame) then
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0+xOffset, -STATCATEGORY_PADDING)
+      else
+        frame:SetPoint("TOPLEFT", 1+xOffset, -STATCATEGORY_PADDING+(CharacterStatsPane.initialOffsetY or 0))
+      end
+      prevFrame = frame
     end
-    prevFrame = frame
   end
 end
 
