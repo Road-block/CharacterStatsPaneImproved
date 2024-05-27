@@ -22,6 +22,7 @@ function InitVars()
   CharacterStatsPaneImprovedDB[1].order = CharacterStatsPaneImprovedDB[1].order or {}
   CharacterStatsPaneImprovedDB[2].collapsed = CharacterStatsPaneImprovedDB[2].collapsed or {}
   CharacterStatsPaneImprovedDB[2].order = CharacterStatsPaneImprovedDB[2].order or {}
+  CharacterStatsPaneImprovedDBG = CharacterStatsPaneImprovedDBG or {showLuck = true}
 end
 
 function addon:SetupPaneHooks()
@@ -61,7 +62,7 @@ end
 
 function addon:ACTIVE_TALENT_GROUP_CHANGED(...)
   local changedTo, changedFrom = ...
-  local prevSpec = addon.spec
+  local prevSpec = addon.spec or 1
   addon.spec = changedTo or 1
   if addon.spec ~= prevSpec then
     local cvarOrder,cvarCollapse

@@ -2,11 +2,13 @@
 ## Title: CharacterStatsPane Improved
 ## Notes: CharacterFrame Improvements|n|TInterface/COMMON/Indicator-Yellow:12:12|tCharacterStatsPane Expand status|n|TInterface/COMMON/Indicator-Yellow:12:12|tStat Category Order and Collapse status|n|TInterface/COMMON/Indicator-Yellow:12:12|tExtra Stats (Tank CTC)
 ## Author: Road-block
-## Version: 1.2.4
+## Version: 1.2.5
 ## SavedVariablesperCharacter: CharacterStatsPaneImprovedDB
+## SavedVariables: CharacterStatsPaneImprovedDBG
 
 utilities.lua
 locales.lua
+options.lua
 newstats.lua
 blizzard.lua
 core.lua

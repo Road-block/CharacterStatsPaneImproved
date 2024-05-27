@@ -83,7 +83,7 @@ local function ScanSlotTooltip(slot, lookFor)
     addon.scanTip:SetOwner(WorldFrame,"ANCHOR_NONE")
   end
   local lookForCapture = format("(%s)",lookFor)
-  local hasItem, hasCD, reparCost = addon.scanTip:SetInventoryItem("player",slot)
+  local hasItem, hasCD, repairCost = addon.scanTip:SetInventoryItem("player",slot)
   local ttName = addon.scanTip:GetName()
   if (hasItem) then
     for i=2,8 do
@@ -219,8 +219,9 @@ local function PaperDollFrame_SetCTC(statFrame, unit)
     statFrame:Hide()
     return
   end
-  local talentIdx = GetPrimaryTalentTree()
-  if not addon.TANKTREE[addon.CLASS] then
+  local specID = GetPrimaryTalentTree() or 0 -- can be nil for unspecced characters
+  local tankSpec = addon.TANKTREE[addon.CLASS]
+  if not (tankSpec and tankSpec == specID) then
     statFrame:Hide()
     return
   end
@@ -301,8 +302,8 @@ local enchantable = {
   [INVSLOT_LEGS] = true,
   [INVSLOT_FEET] = true,
   [INVSLOT_MAINHAND] = true,
-  [INVSLOT_OFFHAND] = true, --"checkOffhand", -- only weapon + shield (frills can also be ench in cata)
-  [INVSLOT_RANGED] = "checkRanged", -- only shields + weapons
+  [INVSLOT_OFFHAND] = true, --"checkOffhand", -- only weapon + shield edit: frills can also be enchanted in cata
+  [INVSLOT_RANGED] = "checkRanged", -- weapons except wands
   [INVSLOT_FINGER1] = "checkEnch", -- only enchanters
   [INVSLOT_FINGER2] = "checkEnch", -- only enchanters
 }
@@ -463,6 +464,10 @@ local function PaperDollFrame_SetGearCheck(statFrame, unit)
 end
 
 local function PaperDollFrame_SetLUCK(statFrame, unit)
+  if not CharacterStatsPaneImprovedDBG.showLuck then
+    statFrame:Hide()
+    return
+  end
   if (unit ~= "player") then
     statFrame:Hide()
     return
