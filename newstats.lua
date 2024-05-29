@@ -422,6 +422,7 @@ local function getGearCheck()
     if tinker_spells[spellId] then
       have = have + 1
     else
+      addon.gearcheck_data.missing = addon.gearcheck_data.missing or {}
       addon.gearcheck_data.missing[L["Tinkers"]] = addon.gearcheck_data.missing[L["Tinkers"]] or {}
       addon.gearcheck_data.missing[L["Tinkers"]][slot] = 1
     end
