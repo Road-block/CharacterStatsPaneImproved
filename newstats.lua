@@ -436,7 +436,7 @@ local function GEARCHECK_OnEnter(statFrame)
   GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT")
   if addon.gearcheck_data.total then
     GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L.STAT_GEARCHECK)..format(" %d/%d",addon.gearcheck_data.have,addon.gearcheck_data.total)..FONT_COLOR_CODE_CLOSE)
-    if addon.tCount(addon.gearcheck_data.missing)>0 then
+    if addon.gearcheck_data.missing and addon.tCount(addon.gearcheck_data.missing)>0 then
       GameTooltip:AddLine(" ")
       for cat,slots in pairs(addon.gearcheck_data.missing) do
         GameTooltip:AddLine(format(ITEM_MISSING,cat), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
