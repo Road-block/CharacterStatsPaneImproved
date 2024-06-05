@@ -285,7 +285,7 @@ function private.checkRanged()
   local item = GetInventoryItemID("player",INVSLOT_RANGED)
   if (item) then
     local itemID, itemType, itemSubType, itemEquipLoc, icon, classID, subclassID = GetItemInfoInstant(item)
-    if classID == Enum.ItemClass.Weapon and subclassID ~= Enum.ItemWeaponSubclass.Wand then
+    if classID == Enum.ItemClass.Weapon and (subclassID ~= Enum.ItemWeaponSubclass.Wand and subclassID ~= Enum.ItemWeaponSubclass.Thrown) then
       return true -- could give non-Hunters a pass
     end
   end
