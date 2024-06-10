@@ -283,10 +283,13 @@ function private.checkOffhand()
 end
 function private.checkRanged()
   local item = GetInventoryItemID("player",INVSLOT_RANGED)
+  if CharacterStatsPaneImprovedDBG.skipMeleeRange and (addon.CLASS == "WARRIOR" or addon.CLASS == "ROGUE") then
+    return false
+  end
   if (item) then
     local itemID, itemType, itemSubType, itemEquipLoc, icon, classID, subclassID = GetItemInfoInstant(item)
     if classID == Enum.ItemClass.Weapon and (subclassID ~= Enum.ItemWeaponSubclass.Wand and subclassID ~= Enum.ItemWeaponSubclass.Thrown) then
-      return true -- could give non-Hunters a pass
+      return true
     end
   end
   return false

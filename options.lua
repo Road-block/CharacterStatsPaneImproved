@@ -50,8 +50,10 @@ local title = OptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge
 title:SetPoint("TOPLEFT", 16, -16)
 title:SetText(OptionsFrame.name)
 local showLuck = options:CreateCheck(OptionsFrame, "showLuck", nil, nil, L["Show Luck"], L["Uncheck to hide the humorous 'Luck' Attribute\n(Account-wide option)"])
-
 showLuck:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+
+local skipMeleeRange = options:CreateCheck(OptionsFrame, "skipMeleeRange", nil, nil, L["Skip Ranged Enchant"], L["Check to skp checking Enchants on Ranged for Melee\n(Account-wide option)"])
+skipMeleeRange:SetPoint("LEFT", showLuck, "RIGHT", 200, 0)
 
 -- Add to BlizzOptions
 local category, layout = Settings.RegisterCanvasLayoutCategory(OptionsFrame, OptionsFrame.name, OptionsFrame.name);

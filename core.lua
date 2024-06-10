@@ -23,6 +23,9 @@ function InitVars()
   CharacterStatsPaneImprovedDB[2].collapsed = CharacterStatsPaneImprovedDB[2].collapsed or {}
   CharacterStatsPaneImprovedDB[2].order = CharacterStatsPaneImprovedDB[2].order or {}
   CharacterStatsPaneImprovedDBG = CharacterStatsPaneImprovedDBG or {showLuck = true}
+  if CharacterStatsPaneImprovedDBG.skipMeleeRange == nil then
+    CharacterStatsPaneImprovedDBG.skipMeleeRange = true
+  end
 end
 
 function addon:SetupPaneHooks()
