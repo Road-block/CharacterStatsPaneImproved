@@ -7,12 +7,19 @@ end
 f:SetScript("OnEvent",f.OnEvent)
 f:RegisterEvent("ADDON_LOADED")
 
-local function loadPaneStatus()
+local function restoreExpand()
   local showStatus = not not CharacterStatsPaneImprovedDB.showPane
   if PaperDollFrame:IsVisible() or PetPaperDollFrame:IsVisible() then
     if CharacterStatsPane:IsShown() ~= showStatus then
-      CharacterFrameExpandButton:Click()
+      CharacterFrame[showStatus and "Expand" or "Collapse"](CharacterFrame)
+      --CharacterFrameExpandButton:Click()
     end
+  end
+end
+
+local function subframeShow(_,subframeName)
+  if subframeName == "PaperDollFrame" or subframeName == "PetPaperDollFrame" then
+    restoreExpand()
   end
 end
 
@@ -29,13 +36,13 @@ function InitVars()
 end
 
 function addon:SetupPaneHooks()
-  EventRegistry:RegisterCallback("CharacterFrame.Show", loadPaneStatus, addon)
-  hooksecurefunc(CharacterFrame, "ShowSubFrame", loadPaneStatus)
-  hooksecurefunc(CharacterFrame,"Expand",function()
-    CharacterStatsPaneImprovedDB.showPane = true
-  end)
+  EventRegistry:RegisterCallback("CharacterFrame.Show", restoreExpand, addon)
+  --EventRegistry:RegisterCallback("CharacterFrame.Hide", suspendSaves, addon)
+  hooksecurefunc(CharacterFrame, "ShowSubFrame", subframeShow)
   CharacterFrameExpandButton:HookScript("PreClick",function(self,button,down)
-    CharacterStatsPaneImprovedDB.showPane = not CharacterFrame.Expanded
+    if CharacterFrameExpandButton:IsMouseOver() then
+      CharacterStatsPaneImprovedDB.showPane = not CharacterFrame.Expanded
+    end
   end)
   hooksecurefunc("PaperDoll_InitStatCategories",addon.InitStatCategories)
   hooksecurefunc("PaperDoll_MoveCategoryUp",addon.MoveCategoryUp)
