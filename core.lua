@@ -25,30 +25,34 @@ end
 
 function InitVars()
   CharacterStatsPaneImprovedDB = CharacterStatsPaneImprovedDB or {{},{}} -- primary, secondary specs
-  CharacterStatsPaneImprovedDB[1].collapsed = CharacterStatsPaneImprovedDB[1].collapsed or {}
-  CharacterStatsPaneImprovedDB[1].order = CharacterStatsPaneImprovedDB[1].order or {}
-  CharacterStatsPaneImprovedDB[2].collapsed = CharacterStatsPaneImprovedDB[2].collapsed or {}
-  CharacterStatsPaneImprovedDB[2].order = CharacterStatsPaneImprovedDB[2].order or {}
-  CharacterStatsPaneImprovedDBG = CharacterStatsPaneImprovedDBG or {showLuck = true}
-  if CharacterStatsPaneImprovedDBG.skipMeleeRange == nil then
-    CharacterStatsPaneImprovedDBG.skipMeleeRange = true
+  if addon.IsCata then
+    CharacterStatsPaneImprovedDB[1].collapsed = CharacterStatsPaneImprovedDB[1].collapsed or {}
+    CharacterStatsPaneImprovedDB[1].order = CharacterStatsPaneImprovedDB[1].order or {}
+    CharacterStatsPaneImprovedDB[2].collapsed = CharacterStatsPaneImprovedDB[2].collapsed or {}
+    CharacterStatsPaneImprovedDB[2].order = CharacterStatsPaneImprovedDB[2].order or {}
+    if CharacterStatsPaneImprovedDBG.skipMeleeRange == nil then
+      CharacterStatsPaneImprovedDBG.skipMeleeRange = true
+    end
   end
+  CharacterStatsPaneImprovedDBG = CharacterStatsPaneImprovedDBG or {showLuck = true}
 end
 
 function addon:SetupPaneHooks()
-  EventRegistry:RegisterCallback("CharacterFrame.Show", restoreExpand, addon)
-  --EventRegistry:RegisterCallback("CharacterFrame.Hide", suspendSaves, addon)
-  hooksecurefunc(CharacterFrame, "ShowSubFrame", subframeShow)
-  CharacterFrameExpandButton:HookScript("PreClick",function(self,button,down)
-    if CharacterFrameExpandButton:IsMouseOver() then
-      CharacterStatsPaneImprovedDB.showPane = not CharacterFrame.Expanded
-    end
-  end)
-  hooksecurefunc("PaperDoll_InitStatCategories",addon.InitStatCategories)
-  hooksecurefunc("PaperDoll_MoveCategoryUp",addon.MoveCategoryUp)
-  hooksecurefunc("PaperDoll_MoveCategoryDown",addon.MoveCategoryDown)
-  --hooksecurefunc("PaperDollStatCategory_OnDragStart",addon.StatCategory_OnDragStart)
-  --hooksecurefunc("PaperDollStatCategory_OnDragStop",addon.StatCategory_OnDragStop)
+  if addon.IsCata then
+    EventRegistry:RegisterCallback("CharacterFrame.Show", restoreExpand, addon)
+    --EventRegistry:RegisterCallback("CharacterFrame.Hide", suspendSaves, addon)
+    hooksecurefunc(CharacterFrame, "ShowSubFrame", subframeShow)
+    CharacterFrameExpandButton:HookScript("PreClick",function(self,button,down)
+      if CharacterFrameExpandButton:IsMouseOver() then
+        CharacterStatsPaneImprovedDB.showPane = not CharacterFrame.Expanded
+      end
+    end)
+    hooksecurefunc("PaperDoll_InitStatCategories",addon.InitStatCategories)
+    hooksecurefunc("PaperDoll_MoveCategoryUp",addon.MoveCategoryUp)
+    hooksecurefunc("PaperDoll_MoveCategoryDown",addon.MoveCategoryDown)
+    --hooksecurefunc("PaperDollStatCategory_OnDragStart",addon.StatCategory_OnDragStart)
+    --hooksecurefunc("PaperDollStatCategory_OnDragStop",addon.StatCategory_OnDragStop)
+  end
   hooksecurefunc("PaperDollFrame_UpdateStatCategory",addon.CleanStatCategory)
 end
 
@@ -62,13 +66,29 @@ function addon:ADDON_LOADED(...)
     InitVars()
     self:SetupPaneHooks()
     self:SetupInjections()
-    addon.spec = GetActiveTalentGroup() or 1
-    f:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-    self:AddStat("DEFENSE","CTC","BLOCK")
+    if GetActiveTalentGroup then
+      addon.spec = GetActiveTalentGroup() or 1
+    elseif C_SpecializationInfo and C_SpecializationInfo.GetActiveSpecGroup then
+      addon.spec = C_SpecializationInfo.GetActiveSpecGroup() or 1
+    end
+    if addon.IsCata then
+      if C_EventUtils.IsEventValid("ACTIVE_TALENT_GROUP_CHANGED") then
+        f:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+      end
+      if C_EventUtils.IsEventValid("PLAYER_SPECIALIZATION_CHANGED") then
+        f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+      end
+      self:AddStat("DEFENSE","CTC","BLOCK")
+    end
+    if addon.IsMoP then
+      self:AddStat("DEFENSE","AVRT","PARRY")
+    end
     self:AddStat("GENERAL","GEARCHECK")
     self:AddStat("ATTRIBUTES","LUCK")
   end
 end
+
+--[[ characterFrameCollapsed ]]
 
 function addon:ACTIVE_TALENT_GROUP_CHANGED(...)
   local changedTo, changedFrom = ...
@@ -82,6 +102,21 @@ function addon:ACTIVE_TALENT_GROUP_CHANGED(...)
       cvarOrder,cvarCollapse = "statCategoryOrder_2","statCategoriesCollapsed_2"
     end
     self.InitStatCategories(PAPERDOLL_STATCATEGORY_DEFAULTORDER,cvarOrder,cvarCollapse,"player")
+  end
+end
+function addon:PLAYER_SPECIALIZATION_CHANGED(...)
+  if ... == "player" then
+    local prevSpec = addon.spec or 1
+    addon.spec = C_SpecializationInfo.GetActiveSpecGroup() or 1
+    if addon.spec ~= prevSpec then
+      local cvarOrder,cvarCollapse
+      if addon.spec == 1 then
+        cvarOrder,cvarCollapse = "statCategoryOrder","statCategoriesCollapsed"
+      else
+        cvarOrder,cvarCollapse = "statCategoryOrder_2","statCategoriesCollapsed_2"
+      end
+      self.InitStatCategories(PAPERDOLL_STATCATEGORY_DEFAULTORDER,cvarOrder,cvarCollapse,"player")
+    end
   end
 end
 

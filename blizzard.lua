@@ -81,73 +81,10 @@ end
 
 addon._dragInfo = {}
 function addon.StatCategory_OnDragStart(self)
-  --[[if PetPaperDollFrame:IsVisible() then return end
-  local _
-  wipe(addon._dragInfo)
-  addon._dragInfo.category = self.Category
-  _, addon._dragInfo.cursorY = GetCursorPosition()
-  addon._dragInfo.cursorY = addon._dragInfo.cursorY*GetScreenHeightScale()
-  addon._dragInfo.insertIndex = nil
-  addon._dragInfo.closestPos = nil
-  -- Find position that will put the dragged frame closest to the cursor
-  for index=1, #CharacterStatsPaneImprovedDB[addon.spec].order+1 do -- +1 is to check the very last position at the bottom
-    if (CharacterStatsPaneImprovedDB[addon.spec].order[index] == addon._dragInfo.category) then
-      addon._dragInfo.myIndex = index
-    end
 
-    local frameY, categoryFrame
-    if (index <= #CharacterStatsPaneImprovedDB[addon.spec].order) then
-      categoryFrame = FindCategoryFrameFromCategoryName(CharacterStatsPaneImprovedDB[addon.spec].order[index])
-      frameY = categoryFrame:GetTop()
-    else
-      categoryFrame = FindCategoryFrameFromCategoryName(CharacterStatsPaneImprovedDB[addon.spec].order[#CharacterStatsPaneImprovedDB[addon.spec].order])
-      frameY = categoryFrame:GetBottom()
-    end
-    frameY = frameY - 8  -- compensate for height of the toolbar area
-    if (addon._dragInfo.myIndex and index > addon._dragInfo.myIndex) then
-      -- Remove height of the dragged frame, since it's going to be moved out of it's current position
-      frameY = frameY + self:GetHeight()
-    end
-    if (not addon._dragInfo.closestPos or abs(addon._dragInfo.cursorY - frameY)<addon._dragInfo.closestPos) then
-      addon._dragInfo.insertIndex = index
-      addon._dragInfo.closestPos = abs(addon._dragInfo.cursorY-frameY)
-    end
-  end]]
 end
 function addon.StatCategory_OnDragStop(self)
-  --[[if PetPaperDollFrame:IsVisible() then return end
-  -- Find position that will put the dragged frame closest to the cursor
-  for index=1, #CharacterStatsPaneImprovedDB[addon.spec].order+1 do -- +1 is to check the very last position at the bottom
-    if (CharacterStatsPaneImprovedDB[addon.spec].order[index] == addon._dragInfo.category) then
-      addon._dragInfo.myIndex = index
-    end
 
-    local frameY, categoryFrame
-    if (index <= #CharacterStatsPaneImprovedDB[addon.spec].order) then
-      categoryFrame = FindCategoryFrameFromCategoryName(CharacterStatsPaneImprovedDB[addon.spec].order[index])
-      frameY = categoryFrame:GetTop()
-    else
-      categoryFrame = FindCategoryFrameFromCategoryName(CharacterStatsPaneImprovedDB[addon.spec].order[#CharacterStatsPaneImprovedDB[addon.spec].order])
-      frameY = categoryFrame:GetBottom()
-    end
-    frameY = frameY - 8  -- compensate for height of the toolbar area
-    if (addon._dragInfo.myIndex and index > addon._dragInfo.myIndex) then
-      -- Remove height of the dragged frame, since it's going to be moved out of it's current position
-      frameY = frameY + self:GetHeight()
-    end
-    if (not addon._dragInfo.closestPos or abs(addon._dragInfo.cursorY - frameY)<addon._dragInfo.closestPos) then
-      addon._dragInfo.insertIndex = index
-      addon._dragInfo.closestPos = abs(addon._dragInfo.cursorY-frameY)
-    end
-  end
-
-  if (addon._dragInfo.insertIndex > addon._dragInfo.myIndex) then
-    addon._dragInfo.insertIndex = addon._dragInfo.insertIndex - 1
-  end
-  if ( addon._dragInfo.myIndex ~= addon._dragInfo.insertIndex) then
-    tremove(CharacterStatsPaneImprovedDB[addon.spec].order, addon._dragInfo.myIndex)
-    tinsert(CharacterStatsPaneImprovedDB[addon.spec].order, addon._dragInfo.insertIndex, addon._dragInfo.category)
-  end]]
 end
 
 --[[RESTORE]]--

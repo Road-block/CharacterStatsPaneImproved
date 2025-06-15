@@ -15,3 +15,7 @@ L.STAT_CTC_DETAIL = "|TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|tBos
 L.STAT_CTC_VERBOSE = "Combat Table Coverage"
 L.STAT_CTC_DELTA = "CTC Delta"
 L.STAT_CTC_CRITBLOCK = "|cff00ff00+%.2F%%|r |T236307:0|t"
+L.STAT_AVOIDRATIO_LABEL = "Avoidance DR Penalty"
+L.STAT_AVOIDRATIO = "Ideal ".._G.PARRY
+L.STAT_AVOIDRATIO_VERBOSE = _G.PARRY.." Goal: "
+L.STAT_AVOIDRATIO_DETAIL = L.STAT_AVOIDRATIO_VERBOSE.."%.2F (%.2F%%)"

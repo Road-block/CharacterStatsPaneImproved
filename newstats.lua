@@ -2,6 +2,20 @@ local addonName, addon = ...
 local L = addon.L
 local _
 local private = {}
+local GetItemSpell = function(...)
+  if _G.GetItemSpell then
+    return _G.GetItemSpell(...)
+  elseif C_Item and C_Item.GetItemSpell then
+    return C_Item.GetItemSpell(...)
+  end
+end
+local GetItemInfoInstant = function(...)
+  if _G.GetItemInfoInstant then
+    return _G.GetItemInfoInstant(...)
+  elseif C_Item and C_Item.GetItemInfoInstant then
+    return _G.GetItemInfoInstant(...)
+  end
+end
 _,addon.RACE,addon.RACEID = UnitRace("player")
 _,addon.CLASS,addon.CLASSID = UnitClass("player")
 addon.TANKTREE = {
@@ -9,7 +23,16 @@ addon.TANKTREE = {
   PALADIN = 2,
   DRUID = 2,
   DEATHKNIGHT = 1,
+  MONK = 1,
 }
+if addon.IsCata then -- can't block
+  addon.TANKTREE.DRUID = nil
+  addon.TANKTREE.DEATHKNIGHT = nil
+  addon.TANKTREE.MONK = nil
+end
+if addon.IsMoP then -- can't parry
+  addon.TANKTREE.DRUID = nil
+end
 addon.SLOTMAP = {
   [INVSLOT_HEAD] = _G.HEADSLOT,
   [INVSLOT_NECK] = _G.NECKSLOT,
@@ -29,6 +52,10 @@ addon.SLOTMAP = {
   [INVSLOT_OFFHAND] = _G.SECONDARYHANDSLOT,
   [INVSLOT_RANGED] = _G.RANGEDSLOT,
 }
+
+if addon.IsMoP then
+  addon.SLOTMAP[INVSLOT_RANGED] = nil
+end
 
 local function FindPlayerAuraByID(spellId)
   local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellId)
@@ -127,6 +154,8 @@ local luck_quotes = {
   [[There Goes Your Life Savings...]],
   [[I have one-of-a-kind items]],
   [[Your gold is welcome here]],
+  [[A pound of pluck is worth a ton of luck]],
+  [[Learn to notice good luck when it's waving at you, trying to get your attention]]
 }
 local function getLUCK()
   local now = GetTime()
@@ -219,7 +248,12 @@ local function PaperDollFrame_SetCTC(statFrame, unit)
     statFrame:Hide()
     return
   end
-  local specID = GetPrimaryTalentTree() or 0 -- can be nil for unspecced characters
+  local specID
+  if GetPrimaryTalentTree then
+    specID = GetPrimaryTalentTree() or 0 -- can be nil for unspecced characters
+  elseif C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
+    specID = C_SpecializationInfo.GetSpecialization() or 0
+  end
   local tankSpec = addon.TANKTREE[addon.CLASS]
   if not (tankSpec and tankSpec == specID) then
     statFrame:Hide()
@@ -230,6 +264,102 @@ local function PaperDollFrame_SetCTC(statFrame, unit)
   PaperDollFrame_SetLabelAndText(statFrame, L.STAT_CTC, addon.ctc_data[3].ctc, true, addon.ctc_data[3].ctc)
   statFrame:SetScript("OnEnter", CTC_OnEnter)
   statFrame:Show()
+end
+
+addon.AVRTCONST = { -- various class constants
+  base = {
+    parry = {
+      WARRIOR = 3.01,
+      PALADIN = 3.01,
+      DEATHKNIGHT = 3.01,
+      MONK = 3,
+    },
+    dodge = {
+      WARRIOR = 5.01,
+      PALADIN = 3.01,
+      DEATHKNIGHT = 5.01,
+      MONK = 0,
+    },
+  },
+  cap = {
+    parry = {
+      WARRIOR = 237.1859,
+      PALADIN = 237.1859,
+      DEATHKNIGHT = 235.5,
+      MONK = 50.276243,
+    },
+    dodge = {
+      WARRIOR = 90.6425,
+      PALADIN = 66.56745,
+      DEATHKNIGHT = 90.6425,
+      MONK = 501.25,
+    },
+  },
+  dr = {
+    WARRIOR = 0.956,
+    PALADIN = 0.886,
+    DEATHKNIGHT = 0.956,
+    MONK = 1.422,
+  },
+}
+addon.avrt_data = {}
+local function getAVRT()
+  local preDodge = GetDodgeChance()
+  local preParry = GetParryChance()
+  local const = addon.AVRTCONST
+  local CLASS = addon.CLASS
+  local baseDodge = const.base.dodge[CLASS]
+  local baseParry = const.base.parry[CLASS]
+  local capDodge = const.cap.dodge[CLASS]
+  local capParry = const.cap.parry[CLASS]
+  if addon.RACEID == 4 then -- nightelf
+    baseDodge = baseDodge + 2
+  end
+  if addon.RACEID == 7 then -- gnome
+    baseParry = baseParry - 0.01
+  end
+  -- rune of swordshattering 3365
+  -- base_parry + cap_parry/cap_dodge*(dodge-base_dodge)
+  local idealPreParry = baseParry + capParry/capDodge*(preDodge-baseDodge)
+  local parryDelta = idealPreParry - preParry
+  local ratioCap = capParry/capDodge
+  -- parryDelta > 0 = get more parry, parryDelta < 0 = lose parry / gain dodge
+  local idealRatio = idealPreParry/preDodge
+  addon.avrt_data = {ideal=idealPreParry,goal=parryDelta,drcap=ratioCap}
+
+  return addon.avrt_data
+end
+
+local function AVRT_OnEnter(statFrame)
+  if (MOVING_STAT_CATEGORY) then return end
+  GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT")
+  GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L.STAT_AVOIDRATIO)..format(" %.1F%%",addon.avrt_data.ideal)..FONT_COLOR_CODE_CLOSE)
+  GameTooltip:AddLine(format(L.STAT_AVOIDRATIO_DETAIL, addon.avrt_data.ideal, addon.avrt_data.goal))
+  GameTooltip:Show()
+end
+
+local function PaperDollFrame_SetAVRT(statFrame, unit)
+  if (unit ~= "player") then
+    statFrame:Hide()
+    return
+  end
+  local specID
+  if GetPrimaryTalentTree then
+    specID = GetPrimaryTalentTree() or 0 -- can be nil for unspecced characters
+  elseif C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
+    specID = C_SpecializationInfo.GetSpecialization() or 0
+  end
+  local tankSpec = addon.TANKTREE[addon.CLASS]
+  if not (tankSpec and tankSpec == specID) then
+    statFrame:Hide()
+    return
+  end
+  addon.avrt_data = getAVRT()
+
+  PaperDollFrame_SetLabelAndText(statFrame, L.STAT_AVOIDRATIO_LABEL, abs(addon.avrt_data.goal), true, abs(addon.avrt_data.goal))
+  statFrame:SetScript("OnEnter", AVRT_OnEnter)
+  statFrame:Show()
+
 end
 
 local stats_temp_sockets = {}
@@ -310,6 +440,10 @@ local enchantable = {
   [INVSLOT_FINGER1] = "checkEnch", -- only enchanters
   [INVSLOT_FINGER2] = "checkEnch", -- only enchanters
 }
+if addon.IsMoP then
+  enchantable[INVSLOT_HEAD] = nil
+  enchantable[INVSLOT_RANGED] = nil
+end
 local socketable = {
   [INVSLOT_HEAD] = "countSockets",
   [INVSLOT_NECK] = "countSockets",
@@ -329,6 +463,9 @@ local socketable = {
   [INVSLOT_RANGED] = "countSockets",
   [INVSLOT_WAIST] = "countSockets", -- belt buckle (everyone)
 }
+if addon.IsMoP then
+  socketable[INVSLOT_RANGED] = nil
+end
 local tinkers = {
   [INVSLOT_BACK] = "checkEngi", -- only engineers
   [INVSLOT_HAND] = "checkEngi", -- only engineers
@@ -336,22 +473,38 @@ local tinkers = {
 }
 local tinker_spells = {
   [54735] = (GetSpellInfo(54735)),
-  [67890] = (GetSpellInfo(67890)),
   [54757] = (GetSpellInfo(54757)),
   [54758] = (GetSpellInfo(54758)),
   [55001] = (GetSpellInfo(55001)),
   [55004] = (GetSpellInfo(55004)),
-  [82387] = (GetSpellInfo(82387)),
   [67810] = (GetSpellInfo(67810)),
+  [67890] = (GetSpellInfo(67890)),
   [82174] = (GetSpellInfo(82174)),
   [82176] = (GetSpellInfo(82176)),
   [82179] = (GetSpellInfo(82179)),
   [82184] = (GetSpellInfo(82184)),
   [82186] = (GetSpellInfo(82186)),
+  [82387] = (GetSpellInfo(82387)),
+  [82626] = (GetSpellInfo(82626)),
   [82820] = (GetSpellInfo(82820)),
   [94548] = (GetSpellInfo(94548)),
-  [82626] = (GetSpellInfo(82626)),
 }
+if addon.IsMoP then
+  tinker_spells[67799] = (GetSpellInfo(67799))
+  tinker_spells[84348] = (GetSpellInfo(84348))
+  tinker_spells[108788] = (GetSpellInfo(108788))
+  tinker_spells[109076] = (GetSpellInfo(109076))
+  tinker_spells[126389] = (GetSpellInfo(126389))
+  tinker_spells[126734] = (GetSpellInfo(126734))
+  tinker_spells[131459] = (GetSpellInfo(131459))
+  --tinker_spells[54735] = (GetSpellInfo(54735))
+  --tinker_spells[54757] = (GetSpellInfo(54757))
+  --tinker_spells[54758] = (GetSpellInfo(54758))
+  --tinker_spells[55001] = (GetSpellInfo(55001))
+  --tinker_spells[55004] = (GetSpellInfo(55004))
+  --tinker_spells[67890] = (GetSpellInfo(67890))
+  --tinker_spells[82387] = (GetSpellInfo(82387))
+end
 addon.enchant_list = { }
 addon.socket_list = { }
 addon.tinker_list = { }
@@ -506,10 +659,12 @@ local function PaperDollFrame_SetLUCK(statFrame, unit)
 end
 
 addon.NEW_STATINFO = { }
-if addon.TANKTREE[addon.CLASS] then -- warrior/paladin
-  addon.NEW_STATINFO["CTC"] = {
-    updateFunc = function(statFrame, unit) PaperDollFrame_SetCTC(statFrame, unit) end
-  }
+if addon.IsCata then
+  if addon.TANKTREE[addon.CLASS] then -- warrior/paladin
+    addon.NEW_STATINFO["CTC"] = {
+      updateFunc = function(statFrame, unit) PaperDollFrame_SetCTC(statFrame, unit) end
+    }
+  end
 end
 addon.NEW_STATINFO["GEARCHECK"] = {
   updateFunc = function(statFrame, unit) PaperDollFrame_SetGearCheck(statFrame, unit) end
@@ -517,6 +672,13 @@ addon.NEW_STATINFO["GEARCHECK"] = {
 addon.NEW_STATINFO["LUCK"] = {
   updateFunc = function(statFrame, unit) PaperDollFrame_SetLUCK(statFrame, unit) end
 }
+if addon.IsMoP then
+  if addon.TANKTREE[addon.CLASS] then -- can parry and dodge
+    addon.NEW_STATINFO["AVRT"] = {
+      updateFunc = function(statFrame, unit) PaperDollFrame_SetAVRT(statFrame, unit) end
+    }
+  end
+end
 
 function addon:AddStat(categoryName_or_Id, newStat, after)
   if not addon.NEW_STATINFO[newStat] then return end
