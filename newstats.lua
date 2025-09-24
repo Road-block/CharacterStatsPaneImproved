@@ -102,14 +102,14 @@ local function LinkBreakDown(itemLink)
   return item_info
 end
 
-local function ScanSlotTooltip(slot, lookFor)
+local function ScanSlotTooltip(slot, lookFor, plain)
   addon.scanTip = addon.scanTip or CreateFrame("GameTooltip",addonName.."TooltipScanner",nil,"GameTooltipTemplate")
-  --addon.scanTip:Hide()
   addon.scanTip:ClearLines()
+  addon.scanTip:Hide()
   if not addon.scanTip:IsOwned(WorldFrame) then
     addon.scanTip:SetOwner(WorldFrame,"ANCHOR_NONE")
   end
-  local lookForCapture = format("(%s)",lookFor)
+  local lookForCapture = plain and format("(%s)",lookFor) or lookFor
   local hasItem, hasCD, repairCost = addon.scanTip:SetInventoryItem("player",slot)
   local ttName = addon.scanTip:GetName()
   if (hasItem) then
@@ -117,8 +117,9 @@ local function ScanSlotTooltip(slot, lookFor)
       local line = _G[ttName.."TextLeft"..i]
       if line then
         local linetext = line:GetText() or ""
-        if linetext:match(lookForCapture) then
-          return lookFor,linetext
+        local matches = addon.wrapTuple(linetext:match(lookForCapture))
+        if matches and #matches > 0 then
+          return matches, linetext
         end
       end
     end
@@ -424,6 +425,23 @@ function private.checkRanged()
   end
   return false
 end
+local stats_upgrades_cache = {}
+local UPGRADE_CAPTURE = _G.ITEM_UPGRADE_TOOLTIP_FORMAT and _G.ITEM_UPGRADE_TOOLTIP_FORMAT:gsub("%%d","(%%d+)") or ": (%d+)/(%d+)"
+function private.countUpgrades(slot)
+  local upgradeCount = 0
+  stats_upgrades_cache[slot] = nil
+  local item = GetInventoryItemID("player",slot)
+  if item then
+    -- this is necessary until they put C_Item.GetItemUpgradeInfo in Classic
+    local matches, linetext = ScanSlotTooltip(slot,UPGRADE_CAPTURE)
+    if matches then
+      local current, total = unpack(matches)
+      stats_upgrades_cache[slot] = tonumber(current)
+      upgradeCount = upgradeCount + tonumber(total)
+    end
+  end
+  return upgradeCount
+end
 
 local enchantable = {
   [INVSLOT_HEAD] = true,
@@ -466,6 +484,24 @@ local socketable = {
 if addon.IsMoP then
   socketable[INVSLOT_RANGED] = nil
 end
+local upgradeable = addon.IsMoP51 and {
+  [INVSLOT_HEAD] = "countUpgrades",
+  [INVSLOT_NECK] = "countUpgrades",
+  [INVSLOT_SHOULDER] = "countUpgrades",
+  [INVSLOT_CHEST] = "countUpgrades",
+  [INVSLOT_WAIST] = "countUpgrades",
+  [INVSLOT_LEGS] = "countUpgrades",
+  [INVSLOT_FEET] = "countUpgrades",
+  [INVSLOT_WRIST] = "countUpgrades",
+  [INVSLOT_HAND] = "countUpgrades",
+  [INVSLOT_FINGER1] = "countUpgrades",
+  [INVSLOT_FINGER2] = "countUpgrades",
+  [INVSLOT_TRINKET1] = "countUpgrades",
+  [INVSLOT_TRINKET2] = "countUpgrades",
+  [INVSLOT_BACK] = "countUpgrades",
+  [INVSLOT_MAINHAND] = "countUpgrades",
+  [INVSLOT_OFFHAND] = "countUpgrades",
+} or {}
 local tinkers = {
   [INVSLOT_BACK] = "checkEngi", -- only engineers
   [INVSLOT_HAND] = "checkEngi", -- only engineers
@@ -508,10 +544,12 @@ end
 addon.enchant_list = { }
 addon.socket_list = { }
 addon.tinker_list = { }
+addon.upgrade_list = { }
 local function getGearCheckList()
   wipe(addon.enchant_list)
   wipe(addon.socket_list)
   wipe(addon.tinker_list)
+  wipe(addon.upgrade_list)
   for slot, check in pairs(enchantable) do
     if (GetInventoryItemID("player", slot)) then
       if check == true then
@@ -541,17 +579,29 @@ local function getGearCheckList()
       end
     end
   end
-  return addon.enchant_list, addon.socket_list, addon.tinker_list
+  for slot, check in pairs(upgradeable) do
+    if (GetInventoryItemID("player", slot)) then
+      if check == true then
+        addon.upgrade_list[slot] = 1
+      else
+        if private[check](slot) then
+          addon.upgrade_list[slot] = private[check](slot)
+        end
+      end
+    end
+  end
+  return addon.enchant_list, addon.socket_list, addon.tinker_list, addon.upgrade_list
 end
 
 addon.gearcheck_data = { }
 local function getGearCheck()
   wipe(addon.gearcheck_data)
-  addon.enchant_list, addon.socket_list, addon.tinker_list = getGearCheckList()
+  addon.enchant_list, addon.socket_list, addon.tinker_list, addon.upgrade_list = getGearCheckList()
   local availableEnchants = Accumulate(addon.enchant_list)
   local availableSockets = Accumulate(addon.socket_list)
   local availableTinkers = Accumulate(addon.tinker_list)
-  addon.gearcheck_data.total = availableEnchants + availableSockets + availableTinkers
+  local availableUpgrades = Accumulate(addon.upgrade_list)
+  addon.gearcheck_data.total = availableEnchants + availableSockets + availableTinkers + availableUpgrades
   local have = 0
   for slot, _ in pairs(addon.enchant_list) do
     local itemdata = LinkBreakDown(GetInventoryItemLink("player",slot))
@@ -581,6 +631,15 @@ local function getGearCheck()
       addon.gearcheck_data.missing = addon.gearcheck_data.missing or {}
       addon.gearcheck_data.missing[L["Tinkers"]] = addon.gearcheck_data.missing[L["Tinkers"]] or {}
       addon.gearcheck_data.missing[L["Tinkers"]][slot] = 1
+    end
+  end
+  for slot, maxUpgrades in pairs(addon.upgrade_list) do
+    local upgraded = stats_upgrades_cache[slot] or 0
+    have = have + upgraded
+    if upgraded < maxUpgrades then
+      addon.gearcheck_data.missing = addon.gearcheck_data.missing or {}
+      addon.gearcheck_data.missing[L["Upgrades"]] = addon.gearcheck_data.missing[L["Upgrades"]] or {}
+      addon.gearcheck_data.missing[L["Upgrades"]][slot] = maxUpgrades-upgraded
     end
   end
   addon.gearcheck_data.have = have -- we'll compute this here
@@ -709,3 +768,13 @@ function addon:AddStat(categoryName_or_Id, newStat, after)
     PaperDollFrame_UpdateStats()
   end
 end
+
+
+--[[
+critblock cap = 85%
+mastery % = critblock % (1:1)
+mastery rating > mastery = 272.7 > 1% (warrior, other tanks have different base + scaling)
+base mastery = 17.6%
+blessing of might = +3000 mastery rating
+85%-17.6% = masterycap
+]]

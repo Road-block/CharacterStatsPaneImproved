@@ -58,6 +58,10 @@ if addon.IsCata then
   skipMeleeRange:SetPoint("LEFT", showLuck, "RIGHT", 200, 0)
 end
 
+if addon.IsMoP51 then
+  -- maybe an option for the upgrade checks
+end
+
 -- Add to BlizzOptions
 local category, layout = Settings.RegisterCanvasLayoutCategory(OptionsFrame, OptionsFrame.name, OptionsFrame.name);
 category.ID = OptionsFrame.name;
