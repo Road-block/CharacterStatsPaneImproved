@@ -364,6 +364,7 @@ local function PaperDollFrame_SetAVRT(statFrame, unit)
 end
 
 local stats_temp_sockets = {}
+local weapon_sha_sockets = {}
 function private.countSockets(slot)
   wipe(stats_temp_sockets)
   local itemlink = GetInventoryItemLink("player",slot)
@@ -381,7 +382,21 @@ function private.countSockets(slot)
     stats_temp_sockets = GetItemStats(itemlink) or {}
     for statKey,v in pairs(stats_temp_sockets) do
       if statKey:match("_SOCKET_") then
-        socketCount = socketCount + tonumber(v)
+        if (slot == INVSLOT_MAINHAND or slot == INVSLOT_OFFHAND) then
+          if statKey:match("_HYDRAULIC") then -- sha-touched
+            if addon.IsMoP51 then
+              extraSocket = 1
+            end
+            weapon_sha_sockets[slot] = tonumber(v) -- temp store
+            if Accumulate(weapon_sha_sockets) < 2 then -- count it, can have max 1
+              socketCount = socketCount + 1
+            end
+          else
+            socketCount = socketCount + tonumber(v)
+          end
+        else
+          socketCount = socketCount + tonumber(v)
+        end
       end
     end
   end
@@ -476,8 +491,8 @@ local socketable = {
   [INVSLOT_TRINKET1] = "countSockets",
   [INVSLOT_TRINKET2] = "countSockets",
   [INVSLOT_BACK] = "countSockets",
-  [INVSLOT_MAINHAND] = "countSockets",
-  [INVSLOT_OFFHAND] = "countSockets",
+  [INVSLOT_MAINHAND] = "countSockets", -- prismatic (5.1+ legendary Q on sha-touched)
+  [INVSLOT_OFFHAND] = "countSockets", -- prismatic (5.1+ legendary Q on sha-touched)
   [INVSLOT_RANGED] = "countSockets",
   [INVSLOT_WAIST] = "countSockets", -- belt buckle (everyone)
 }

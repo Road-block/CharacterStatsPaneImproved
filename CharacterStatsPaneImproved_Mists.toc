@@ -2,7 +2,7 @@
 ## Title: CharacterStatsPane Improved
 ## Notes: CharacterFrame Improvements|n|TInterface/COMMON/Indicator-Yellow:12:12|tCharacter Gearcheck|n|TInterface/COMMON/Indicator-Yellow:12:12|tExtra Stats (Avoidance Optimization)
 ## Author: Road-block
-## Version: 1.4.0
+## Version: 1.4.1
 ## SavedVariablesperCharacter: CharacterStatsPaneImprovedDB
 ## SavedVariables: CharacterStatsPaneImprovedDBG
 

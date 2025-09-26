@@ -5,6 +5,7 @@ addon.IsMoP = WOW_PROJECT_ID == WOW_PROJECT_MISTS_CLASSIC
 addon.IsCata = WOW_PROJECT_ID == WOW_PROJECT_CATACLYSM_CLASSIC
 addon.IsMoPre = addon.IsMoP and (GetMaxPlayerLevel() < 90)
 addon.IsMoP51 = addon.IsMoP and tonumber(wowtoc) >= 50501
+addon.IsMoP52 = addon.IsMoP and tonumber(wowtoc) >= 50502
 
 function addon.tCount(tbl)
   local count = 0
