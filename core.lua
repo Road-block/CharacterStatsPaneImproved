@@ -82,6 +82,7 @@ function addon:ADDON_LOADED(...)
     end
     if addon.IsMoP then
       self:AddStat("DEFENSE","AVRT","PARRY")
+      self:AddStat("MELEE","CRITCAP","CRITCHANCE")
     end
     self:AddStat("GENERAL","GEARCHECK")
     self:AddStat("ATTRIBUTES","LUCK")

@@ -19,16 +19,34 @@ end
 _,addon.RACE,addon.RACEID = UnitRace("player")
 _,addon.CLASS,addon.CLASSID = UnitClass("player")
 addon.TANKTREE = {
-  WARRIOR = 3,
-  PALADIN = 2,
-  DRUID = 2,
+  WARRIOR     = 3,
+  PALADIN     = 2,
+  DRUID       = 2,
   DEATHKNIGHT = 1,
-  MONK = 1,
+  MONK        = 1,
 }
-if addon.IsCata then -- can't block
+addon.DUALWIELD = {
+  WARRIOR     = 2,
+  SHAMAN      = 2,
+  MONK        = {[1]=true,[3]=true},
+  ROGUE       = {[1]=true,[2]=true,[3]=true},
+  DEATHKNIGHT = {[1]=true,[2]=true,[3]=true},
+}
+addon.MELEE = {
+  WARRIOR     = {[1]=true,[2]=true,[3]=true},
+  PALADIN     = {[2]=true,[3]=true},
+  DEATHKNIGHT = {[1]=true,[2]=true,[3]=true},
+  SHAMAN      = 2,
+  ROGUE       = {[1]=true,[2]=true,[3]=true},
+  DRUID       = {[2]=true,[3]=true},
+  MONK        = {[1]=true,[3]=true},
+}
+if addon.IsCata then
   addon.TANKTREE.DRUID = nil
   addon.TANKTREE.DEATHKNIGHT = nil
   addon.TANKTREE.MONK = nil
+  addon.DUALWIELD.MONK = nil
+  addon.MELEE.MONK = nil
 end
 if addon.IsMoP then -- can't parry
   addon.TANKTREE.DRUID = nil
@@ -360,7 +378,149 @@ local function PaperDollFrame_SetAVRT(statFrame, unit)
   PaperDollFrame_SetLabelAndText(statFrame, L.STAT_AVOIDRATIO_LABEL, abs(addon.avrt_data.goal), true, abs(addon.avrt_data.goal))
   statFrame:SetScript("OnEnter", AVRT_OnEnter)
   statFrame:Show()
+end
 
+--[[local function isDualWielding()
+  local mainhand = GetInventoryItemID("player",INVSLOT_MAINHAND)
+  local offhand = GetInventoryItemID("player",INVSLOT_OFFHAND)
+  if mainhand and offhand then
+    local _, _, _, _, _, MHclassID, MHsubclassID = GetItemInfoInstant(mainhand)
+    local _, _, _, _, _, OHclassID, OHsubclassID = GetItemInfoInstant(offhand)
+    if MHclassID == Enum.ItemClass.Weapon and OHclassID == Enum.ItemClass.Weapon then
+      return true
+    end
+  end
+  return false
+end]]
+local function canDualWield()
+  local specID
+  if GetPrimaryTalentTree then
+    specID = GetPrimaryTalentTree() or 0 -- can be nil for unspecced characters
+  elseif C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
+    specID = C_SpecializationInfo.GetSpecialization() or 0
+  end
+  local dualwield = addon.DUALWIELD[addon.CLASS]
+  if type(dualwield)=="table" then
+    return dualwield[specID] and true or false
+  elseif type(dualwield)=="number" then
+    return dualwield == specID and true or false
+  else
+    return false
+  end
+  return false
+end
+addon.CRITCONST = {
+  glance = 24,
+  miss = 3,
+  levelmiss = 1.5,
+  block = 5,
+  levelblock = 0.5,
+  dodge = 3,
+  parry = 3,
+  leveldodge = 1.5,
+  levelparry = 1.5,
+  dualmisstax = 19,
+  critsup = 1,
+  raidbuff = 5,
+  fullcombatable = 100,
+}
+addon.critcap_data = { }
+local function getCRITCAP()
+  local const = addon.CRITCONST
+  local CLASS = addon.CLASS
+  local critchance = GetCritChance()
+  local hitchance = GetCombatRatingBonus(CR_HIT_MELEE) + GetHitModifier()
+  local glancing = const.glance
+  for i=0,3 do
+    local dodgecombatable,oh_enemydodge = GetEnemyDodgeChance(i)
+    local parrycombatable,oh_enemyparry = GetEnemyParryChance(i)
+    local missenemycap = const.miss + (i*const.levelmiss)
+    local missenemybase,oh_missenemy = missenemycap + (IsDualWielding() and const.dualmisstax or 0)
+    local blockcombatable = const.block + (i*const.levelblock)
+    oh_missenemy = missenemybase
+    local misscombatable = math.max(0,missenemybase-hitchance)
+    local critcap_back = const.fullcombatable - ((i==3 and glancing or 0) + misscombatable + dodgecombatable)
+    local critcap_front = const.fullcombatable - ((i==3 and glancing or 0) + misscombatable + dodgecombatable + parrycombatable + blockcombatable)
+    local realcritchance = math.max(0,critchance - (i*const.critsup))
+    local canraiseby_back = misscombatable + dodgecombatable
+    local canraiseby_front = canraiseby_back + parrycombatable
+    addon.critcap_data[i] = {
+      melee_critcap = critcap_back,
+      tank_critcap = critcap_front,
+      real_crit = realcritchance,
+      melee_critcap_raise = canraiseby_back,
+      tank_critcap_raise = canraiseby_front,
+      melee_crit_delta = critcap_back-realcritchance,
+      tank_crit_delta = critcap_front-realcritchance,
+      melee_crit_delta_critbuffed = critcap_back-realcritchance-const.raidbuff,
+      tank_crit_delta_critbuffed = critcap_front-realcritchance-const.raidbuff,
+    }
+    --local combatcritchance_front = realcritchance * (critcap_front/100)
+    --local combatcritchance_back = realcritchance * (critcap_back/100)
+  end
+
+  return addon.critcap_data
+end
+
+local function CRITCAP_OnEnter(statFrame)
+  if (MOVING_STAT_CATEGORY) then return end
+  local boss_data = addon.critcap_data[3]
+  GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT")
+  GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L.STAT_CRITCAP)..format(" %.1F%%",boss_data.melee_critcap)..format(" (|TInterface\\GROUPFRAME\\UI-GROUP-MAINTANKICON:0|t%.1F%%)",boss_data.tank_critcap)..FONT_COLOR_CODE_CLOSE)
+  GameTooltip:AddLine(format(L.STAT_CRITCAP_REALCRIT,boss_data.real_crit))
+  GameTooltip:AddLine(format(L.STAT_CRITCAP_CRITDELTA,boss_data.melee_crit_delta,boss_data.tank_crit_delta))
+  GameTooltip:AddLine(format(L.STAT_CRITCAP_RAISEBY,boss_data.melee_critcap_raise,boss_data.tank_critcap_raise))
+  GameTooltip:AddLine(" ")
+  GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, L.STAT_CRITCAP_VERBOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+  local playerLevel = UnitLevel("player");
+  for i=0,3 do
+    local level = playerLevel + i;
+      if (i == 3) then
+        level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+      end
+    GameTooltip:AddDoubleLine("      "..level, format("%d%% (|TInterface\\GROUPFRAME\\UI-GROUP-MAINTANKICON:0|t%d%%)",addon.critcap_data[i].melee_critcap+0.5,addon.critcap_data[i].tank_critcap+0.5).."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b)
+  end
+  GameTooltip:Show()
+end
+
+local function PaperDollFrame_SetCRITCAP(statFrame, unit)
+  if (unit ~= "player") then
+    statFrame:Hide()
+    return
+  end
+  local specID
+  if GetPrimaryTalentTree then
+    specID = GetPrimaryTalentTree() or 0 -- can be nil for unspecced characters
+  elseif C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
+    specID = C_SpecializationInfo.GetSpecialization() or 0
+  end
+  local meleespec = addon.MELEE[addon.CLASS]
+  if type(meleespec) == "table" then
+    if not meleespec[specID] then
+      statFrame:Hide()
+      return
+    end
+  elseif type(meleespec) == "number" then
+    if meleespec~=specID then
+      statFrame:Hide()
+      return
+    end
+  else
+    statFrame:Hide()
+    return
+  end
+  local dualwield = addon.DUALWIELD[addon.CLASS]
+
+  addon.critcap_data = getCRITCAP()
+  local boss_data = addon.critcap_data[3]
+
+  if ( statFrame.Label ) then
+    statFrame.Label:SetText(format(STAT_FORMAT, L.STAT_CRITCAP))
+  end
+  statFrame.Value:SetText(format("%d%%",boss_data.melee_critcap+0.5))
+  statFrame.numericValue = boss_data.melee_critcap
+  statFrame:SetScript("OnEnter", CRITCAP_OnEnter)
+  statFrame:Show()
 end
 
 local stats_temp_sockets = {}
@@ -752,6 +912,11 @@ if addon.IsMoP then
       updateFunc = function(statFrame, unit) PaperDollFrame_SetAVRT(statFrame, unit) end
     }
   end
+  if addon.MELEE[addon.CLASS] then
+    addon.NEW_STATINFO["CRITCAP"] = {
+      updateFunc = function(statFrame, unit) PaperDollFrame_SetCRITCAP(statFrame, unit) end
+    }
+  end
 end
 
 function addon:AddStat(categoryName_or_Id, newStat, after)
@@ -784,6 +949,54 @@ function addon:AddStat(categoryName_or_Id, newStat, after)
   end
 end
 
+--[[meleecrit cap
+enemy combat table
+raid class buffs to crit chance = 5% (arcane brilliance, lotp, legacy, some pets)
+
+==2H/1HShield from the front
+-24% - glancing
+-7.5% - miss
+-7.5% - dodged
+-15% - parried
+-6.5% - blocked
+---- 60,5% ----
+hit + crit = 39.5%
+critcap = 39.5+3 = 42.5%
+critcap raidbuffed = 37.5% (5% class buffs)
+real crit% = 0.395 * crit%
+==2H/1HShield from the back
+-24% - glancing
+-7.5% - miss
+-7.5% - dodge
+---- 39% ----
+hit + crit = 61%
+critcap = 61+3 = 64%
+critcap raidbuffed = 59%
+real crit% = 0.61 * crit%
+==DW from the front
+-24% - glancing
+-26.5% : 7.5+19 - miss
+-7.5% - dodged
+-15% - parried
+-6.5% - blocked
+---- 79.5% ----
+hit + crit = 20.5%
+critcap = 20.5+3 = 23.5%
+critcap raidbuffed = 18.5%
+real crit% = 0.205 * crit%
+==DW from the back
+-24% - glancing
+-26.5% : 7.5+19 - miss
+-7.5% - dodged
+---- 58% ----
+hit + crit = 42%
+critcap = 42+3 = 45%
+critcap raidbuffed = 40%
+real crit% = 0.42 * crit%
+
+critcap = 100 - (glancing + miss + dodge + [parry + block])
+critcap_buffed = critcap - 5
+]]
 
 --[[
 critblock cap = 85%
