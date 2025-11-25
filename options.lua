@@ -21,12 +21,35 @@ function options.CheckBoxOnClick(self)
   self:SetValue(checked)
 end
 
+function options.CheckBoxOnEnter(self)
+  if self.tooltipText and self.tooltipRequirement then
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip_SetTitle(GameTooltip, self.tooltipText)
+    GameTooltip_AddNormalLine(GameTooltip, self.tooltipRequirement, true)
+    GameTooltip:Show()
+  end
+end
+
+function options.CheckBoxOnLeave(self)
+  if GameTooltip:IsOwned(self) then
+    GameTooltip_Hide()
+  end
+end
+
 function options.CheckBoxGetOption(self)
   return CharacterStatsPaneImprovedDBG[self.option]
 end
 
 function options.CheckBoxSetOption(self, checked)
   CharacterStatsPaneImprovedDBG[self.option] = checked
+end
+
+function options.CheckBoxGetPCOption(self)
+  return CharacterStatsPaneImprovedDB[self.option]
+end
+
+function options.CheckBoxSetPCOption(self, checked)
+  CharacterStatsPaneImprovedDB[self.option] = checked
 end
 
 function options:CreateCheck(parent, option, get, set, label, description)
@@ -37,6 +60,9 @@ function options:CreateCheck(parent, option, get, set, label, description)
   checkbox.SetValue = set or options.CheckBoxSetOption
   checkbox:SetScript("OnShow", options.CheckBoxSetChecked)
   checkbox:SetScript("OnClick", options.CheckBoxOnClick)
+  checkbox:SetScript("OnEnter", options.CheckBoxOnEnter)
+  checkbox:SetScript("OnLeave", options.CheckBoxOnLeave)
+  checkbox:SetScript("OnHide", options.CheckBoxOnLeave)
   checkbox.label = _G[checkbox:GetName() .. "Text"]
   checkbox.label:SetText(label)
   checkbox.tooltipText = label
@@ -58,8 +84,11 @@ if addon.IsCata then
   skipMeleeRange:SetPoint("LEFT", showLuck, "RIGHT", 200, 0)
 end
 
+local dualShaTouched
 if addon.IsMoP51 then
   -- maybe an option for the upgrade checks
+  dualShaTouched = options:CreateCheck(OptionsFrame, "dualShaTouched", options.CheckBoxGetPCOption, options.CheckBoxSetPCOption, L["Dual Sha-Touched"], L["Count all Sha-Touched sockets when Dual Wielding"])
+  dualShaTouched:SetPoint("TOPLEFT", showLuck, "BOTTOMLEFT", 0, -16)
 end
 
 -- Add to BlizzOptions

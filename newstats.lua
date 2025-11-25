@@ -548,7 +548,7 @@ function private.countSockets(slot)
               extraSocket = 1
             end
             weapon_sha_sockets[slot] = tonumber(v) -- temp store
-            if Accumulate(weapon_sha_sockets) < 2 then -- count it, can have max 1
+            if CharacterStatsPaneImprovedDB.dualShaTouched or (Accumulate(weapon_sha_sockets) < 2) then -- count it, max 1 unless user option to count all
               socketCount = socketCount + 1
             end
           else
@@ -736,6 +736,7 @@ local function getGearCheckList()
       end
     end
   end
+  wipe(weapon_sha_sockets)
   for slot, check in pairs(socketable) do
     if (GetInventoryItemID("player", slot)) then
       if check == true then
@@ -949,60 +950,4 @@ function addon:AddStat(categoryName_or_Id, newStat, after)
   end
 end
 
---[[meleecrit cap
-enemy combat table
-raid class buffs to crit chance = 5% (arcane brilliance, lotp, legacy, some pets)
-
-==2H/1HShield from the front
--24% - glancing
--7.5% - miss
--7.5% - dodged
--15% - parried
--6.5% - blocked
----- 60,5% ----
-hit + crit = 39.5%
-critcap = 39.5+3 = 42.5%
-critcap raidbuffed = 37.5% (5% class buffs)
-real crit% = 0.395 * crit%
-==2H/1HShield from the back
--24% - glancing
--7.5% - miss
--7.5% - dodge
----- 39% ----
-hit + crit = 61%
-critcap = 61+3 = 64%
-critcap raidbuffed = 59%
-real crit% = 0.61 * crit%
-==DW from the front
--24% - glancing
--26.5% : 7.5+19 - miss
--7.5% - dodged
--15% - parried
--6.5% - blocked
----- 79.5% ----
-hit + crit = 20.5%
-critcap = 20.5+3 = 23.5%
-critcap raidbuffed = 18.5%
-real crit% = 0.205 * crit%
-==DW from the back
--24% - glancing
--26.5% : 7.5+19 - miss
--7.5% - dodged
----- 58% ----
-hit + crit = 42%
-critcap = 42+3 = 45%
-critcap raidbuffed = 40%
-real crit% = 0.42 * crit%
-
-critcap = 100 - (glancing + miss + dodge + [parry + block])
-critcap_buffed = critcap - 5
-]]
-
---[[
-critblock cap = 85%
-mastery % = critblock % (1:1)
-mastery rating > mastery = 272.7 > 1% (warrior, other tanks have different base + scaling)
-base mastery = 17.6%
-blessing of might = +3000 mastery rating
-85%-17.6% = masterycap
-]]
+_G.CSPI_DEV = private -- debug help

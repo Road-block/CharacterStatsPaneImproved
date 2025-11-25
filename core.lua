@@ -35,6 +35,11 @@ function InitVars()
     end
   end
   CharacterStatsPaneImprovedDBG = CharacterStatsPaneImprovedDBG or {showLuck = true}
+  if addon.IsMoP51 then
+    if CharacterStatsPaneImprovedDB.dualShaTouched == nil then
+      CharacterStatsPaneImprovedDB.dualShaTouched = false
+    end
+  end
 end
 
 function addon:SetupPaneHooks()
