@@ -523,6 +523,47 @@ local function PaperDollFrame_SetCRITCAP(statFrame, unit)
   statFrame:Show()
 end
 
+local thunder_armaments = { }
+local crafted_reborn = {
+  [94579] = true,
+  [94580] = true,
+  [94585] = true,
+  [94586] = true,
+  [94591] = true,
+  [94592] = true,
+}
+function private.isThunderArmament(itemlink,slot)
+  if not addon.IsMoP52 then return end
+  if not (slot == INVSLOT_MAINHAND or slot == INVSLOT_OFFHAND) then return end
+  local _, itemLevel, itemID
+  itemID = itemlink:match("Hitem:(%d+):")
+  itemID = tonumber(itemID)
+  if itemID then
+    if thunder_armaments[itemID] then return 1 end
+    _,_,_,itemLevel = C_Item.GetItemInfo(itemID)
+    if itemLevel == 535 then
+      thunder_armaments[itemID] = true
+      return 1
+    elseif itemLevel == 522 then
+      local stats = GetItemStats(itemlink)
+      for statKey,v in pairs(stats) do
+        if statKey:match("PVP_POWER") then
+          return
+        end
+      end
+      thunder_armaments[itemID] = true
+      return 1
+    elseif itemLevel == 502 then
+      local matches, linetext = ScanSlotTooltip(slot,L.TAG_CELESTIAL,true)
+      if matches or crafted_reborn[itemID] then
+        thunder_armaments[itemID] = true
+        return 1
+      end
+    end
+  end
+  return
+end
+
 local stats_temp_sockets = {}
 local weapon_sha_sockets = {}
 function private.countSockets(slot)
@@ -558,6 +599,9 @@ function private.countSockets(slot)
           socketCount = socketCount + tonumber(v)
         end
       end
+    end
+    if private.isThunderArmament(itemlink,slot) then
+      extraSocket = 1
     end
   end
   return socketCount+extraSocket, extraSocket -- total possible, extra

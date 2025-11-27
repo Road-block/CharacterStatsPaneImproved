@@ -25,3 +25,19 @@ L.STAT_CRITCAP_RAISEBY_RB = "Raid Buffed Crit %.2F%% (|TInterface\\GROUPFRAME\\U
 L.STAT_AVOIDRATIO = "Ideal ".._G.PARRY
 L.STAT_AVOIDRATIO_VERBOSE = _G.PARRY.." Goal: "
 L.STAT_AVOIDRATIO_DETAIL = L.STAT_AVOIDRATIO_VERBOSE.."%.2F (%.2F%%)"
+L.TAG_ELITE = "Elite"
+L.TAG_CELESTIAL = "Celestial"
+
+if LOCALE == "deDE" then
+  L.TAG_CELESTIAL = "Erhaben"
+elseif LOCALE == "ruRU" then
+  L.TAG_CELESTIAL = "Небожители"
+elseif LOCALE == "frFR" then
+  L.TAG_CELESTIAL = "Astral"
+elseif LOCALE == "koKR" then
+  L.TAG_CELESTIAL = "천신"
+elseif LOCALE == "zhTW" then
+  L.TAG_CELESTIAL = "天尊"
+elseif LOCALE == "zhCN" then
+  L.TAG_CELESTIAL = "天神"
+end
