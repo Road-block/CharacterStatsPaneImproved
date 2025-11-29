@@ -6,7 +6,7 @@ local L = setmetatable({}, { __index = function(t, k)
 end })
 addon.L = L
 
-local LOCALE = GetLocale()
+local LOCALE = (GAME_LOCALE or GetLocale())
 
 L.STAT_CTC = "CTC"
 L.STAT_LUCK = "Luck"
