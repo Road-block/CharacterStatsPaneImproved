@@ -27,9 +27,11 @@ L.STAT_AVOIDRATIO_VERBOSE = _G.PARRY.." Goal: "
 L.STAT_AVOIDRATIO_DETAIL = L.STAT_AVOIDRATIO_VERBOSE.."%.2F (%.2F%%)"
 L.TAG_ELITE = "Elite"
 L.TAG_CELESTIAL = "Celestial"
+L.TAG_THUNDERFORGED = "Thunderforged"
 
 if LOCALE == "deDE" then
   L.TAG_CELESTIAL = "Erhaben"
+  L.TAG_THUNDERFORGED = "Donnergeschmiedet"
 elseif LOCALE == "ruRU" then
   L.STAT_CTC = "CTC"
   L.STAT_LUCK = "Удача"
@@ -50,12 +52,17 @@ elseif LOCALE == "ruRU" then
   L.STAT_AVOIDRATIO_DETAIL = L.STAT_AVOIDRATIO_VERBOSE.."%.2F (%.2F%%)"
   L.TAG_ELITE = "Элита"
   L.TAG_CELESTIAL = "Небожители"
+  L.TAG_THUNDERFORGED = "Создано в Кузне Грома"
 elseif LOCALE == "frFR" then
   L.TAG_CELESTIAL = "Astral"
+  L.TAG_THUNDERFORGED = "Forgé par le tonnerre"
 elseif LOCALE == "koKR" then
   L.TAG_CELESTIAL = "천신"
+  L.TAG_THUNDERFORGED = "천둥벼림"
 elseif LOCALE == "zhTW" then
   L.TAG_CELESTIAL = "天尊"
+  L.TAG_THUNDERFORGED = "雷霆鑄造"
 elseif LOCALE == "zhCN" then
   L.TAG_CELESTIAL = "天神"
+  L.TAG_THUNDERFORGED = "雷霆"
 end

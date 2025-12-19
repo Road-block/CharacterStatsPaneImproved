@@ -541,9 +541,15 @@ function private.isThunderArmament(itemlink,slot)
   if itemID then
     if thunder_armaments[itemID] then return 1 end
     _,_,_,itemLevel = C_Item.GetItemInfo(itemID)
-    if itemLevel == 535 then
+    if itemLevel == 541 or itemLevel == 535 then
       thunder_armaments[itemID] = true
       return 1
+    elseif itemLevel == 528 then
+      local matches, linetext = ScanSlotTooltip(slot,L.TAG_THUNDERFORGED,true)
+      if matches then
+        thunder_armaments[itemID] = true
+        return 1
+      end
     elseif itemLevel == 522 then
       local stats = GetItemStats(itemlink)
       for statKey,v in pairs(stats) do
