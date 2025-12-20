@@ -2,7 +2,7 @@
 ## Title: CharacterStatsPane Improved
 ## Notes: CharacterFrame Pane Improvements
 ## Author: Road-block
-## Version: 1.5.3
+## Version: 1.5.4
 ## SavedVariablesperCharacter: CharacterStatsPaneImprovedDB
 ## SavedVariables: CharacterStatsPaneImprovedDBG
 

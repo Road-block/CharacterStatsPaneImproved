@@ -539,6 +539,8 @@ function private.isThunderArmament(itemlink,slot)
   itemID = itemlink:match("Hitem:(%d+):")
   itemID = tonumber(itemID)
   if itemID then
+    _, _, _, _, _, classID, subclassID = GetItemInfoInstant(itemID)
+    if classID ~= Enum.ItemClass.Weapon then return end
     if thunder_armaments[itemID] then return 1 end
     _,_,_,itemLevel = C_Item.GetItemInfo(itemID)
     if itemLevel == 541 or itemLevel == 535 then
