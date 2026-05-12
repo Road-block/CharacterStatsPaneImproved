@@ -1,8 +1,9 @@
-## Interface: 50503,50502,50500,40402
+## Interface: 50503,50504
 ## Title: CharacterStatsPane Improved
 ## Notes: CharacterFrame Pane Improvements
 ## Author: Road-block
-## Version: 1.5.4
+## Category: User Interface
+## Version: 1.5.5
 ## SavedVariablesperCharacter: CharacterStatsPaneImprovedDB
 ## SavedVariables: CharacterStatsPaneImprovedDBG
 
